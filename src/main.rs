@@ -59,12 +59,18 @@ async fn main() {
 
 }
 
-async fn ext_test1(cabeceras: HeaderMap)-> (StatusCode, String) {
-    println!("Headers: {:?}", cabeceras);
-    return (
+async fn ext_test1(headers: HeaderMap)-> (StatusCode, String) {
+    println!("Headers: {:?}", headers);
+    if let Some(game_is_running)= headers.get("GameRunning") {
+        println!("Game is running header present: {}", game_is_running.to_str().unwrap_or("0"));
+    }else{
+        println!("Game is running header not present");
+    }     
+
+    (
         StatusCode::OK,
         json!({"success": true, "message": "Extractor test successful"}).to_string(),
-    );   
+    )   
 }
 
 // basic handler that responds with a static string
