@@ -3,11 +3,9 @@
 
 use std::time::Duration;
 use axum::{
-    extract::{Path,State},
-    routing::{get,patch},
-    http::{StatusCode},
-    Json, Router,
-    http::HeaderMap,
+    extract::{Path,State}, http::{HeaderMap, Method, StatusCode}, 
+    routing::{get,patch,post,put,options}, 
+    Json, Router
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -51,6 +49,7 @@ async fn main() {
         .route("/second", get(second_route))
         .route("/tasks", get(get_tasks))
         .route("/extractorTest1", get(ext_test1))
+        .route("/extractorTest2", post(ext_test2))
         .with_state(db_pool);
     // Run the app with hyper, listening on the specified address
     axum::serve(listener, app)
@@ -73,6 +72,13 @@ async fn ext_test1(headers: HeaderMap)-> (StatusCode, String) {
     )   
 }
 
+async fn ext_test2(method:Method)-> (StatusCode, String) {
+    println!("Method: {:?}", method);
+    (
+        StatusCode::OK,
+        json!({"success": true, "message": "Extractor test 2 successful"}).to_string(),
+    )
+}
 // basic handler that responds with a static string
 async fn root() -> &'static str {
     "Hello World, from Axum!"
