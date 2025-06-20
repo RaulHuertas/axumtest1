@@ -50,12 +50,68 @@ async fn main() {
         .route("/tasks", get(get_tasks))
         .route("/extractorTest1", get(ext_test1))
         .route("/extractorTest2", post(ext_test2))
+        .route("/test_handler", post(test_handler))        
         .with_state(db_pool);
     // Run the app with hyper, listening on the specified address
     axum::serve(listener, app)
     .await
     .expect("Failed to start server");
 
+}
+
+enum TestCommands{
+    None,
+    Start,
+    Stop,
+    Pause,
+    Resume,
+}
+impl TestCommands {
+    fn from_str(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "start" => TestCommands::Start,
+            "stop" => TestCommands::Stop,
+            "pause" => TestCommands::Pause,
+            "resume" => TestCommands::Resume,
+            _ => TestCommands::None,
+        }
+    }
+}
+
+#[derive(Deserialize,Debug,Serialize)]
+struct TestMessage {
+  name: Option<String>,
+  command: Option<String>,
+}
+
+async fn test_handler(
+    Json(payload): Json<TestMessage>,
+) -> (StatusCode, String) {
+    println!("Received payload: {:?}", payload);
+    if let Some(name) = payload.name {
+        println!("Name: {}", name);
+    } else {
+        println!("No name provided");
+    }
+    let mut command_received = TestCommands::None;
+    if let Some(command) = payload.command {
+        println!("Command: {}", command);
+        command_received = TestCommands::from_str(&command); 
+    } else {
+        println!("No command provided");
+    }
+    match command_received {
+        TestCommands::Start => println!("Starting..."),
+        TestCommands::Stop => println!("Stopping..."),
+        TestCommands::Pause => println!("Pausing..."),
+        TestCommands::Resume => println!("Resuming..."),
+        TestCommands::None => println!("No valid command provided"),
+    }
+
+    (
+        StatusCode::OK,
+        json!({"success": true, "message": "Test handler successful"}).to_string(),
+    )
 }
 
 async fn ext_test1(headers: HeaderMap)-> (StatusCode, String) {
