@@ -7,6 +7,7 @@ use axum::{
     routing::{get,patch},
     http::{StatusCode},
     Json, Router,
+    http::HeaderMap,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -49,12 +50,21 @@ async fn main() {
         .route("/", get(root))
         .route("/second", get(second_route))
         .route("/tasks", get(get_tasks))
+        .route("/extractorTest1", get(ext_test1))
         .with_state(db_pool);
     // Run the app with hyper, listening on the specified address
     axum::serve(listener, app)
     .await
     .expect("Failed to start server");
 
+}
+
+async fn ext_test1(cabeceras: HeaderMap)-> (StatusCode, String) {
+    println!("Headers: {:?}", cabeceras);
+    return (
+        StatusCode::OK,
+        json!({"success": true, "message": "Extractor test successful"}).to_string(),
+    );   
 }
 
 // basic handler that responds with a static string
@@ -107,6 +117,46 @@ async fn get_tasks(State(db_pool):State<MySqlPool>)
             json!({"success":true, "data":rows}).to_string()
     ));
 
+}
+
+async fn update_task(
+  State(db_pool): State<MySqlPool>,
+  Path(task_id): Path<i32>,
+  Json(task): Json<UpdateTaskReq>,
+) -> Result<(StatusCode, String), (StatusCode, String)> {
+  let mut query = "UPDATE tasks SET task_id = $1".to_owned();
+
+  let mut i = 2;
+
+  if task.name.is_some() {
+    query.push_str(&format!(", name = ${i}"));
+    i = i + 1;
+  };
+
+  if task.priority.is_some() {
+    query.push_str(&format!(", priority = ${i}"));
+  };
+
+  query.push_str(&format!(" WHERE task_id = $1"));
+
+  let mut s = sqlx::query(&query).bind(task_id);
+
+  if task.name.is_some() {
+    s = s.bind(task.name);
+  }
+
+  if task.priority.is_some() {
+    s = s.bind(task.priority);
+  }
+
+  s.execute(&db_pool).await.map_err(|e| {
+    (
+      StatusCode::INTERNAL_SERVER_ERROR,
+      json!({"success": false, "message": e.to_string()}).to_string(),
+    )
+  })?;
+
+  Ok((StatusCode::OK, json!({"success":true}).to_string()))
 }
 
 
