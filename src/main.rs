@@ -31,6 +31,8 @@ async fn main() {
         priority: Some(1),
     };
     println!("test_str: {:?}", test_str);
+    test_str.increase_priority();
+    println!("test_str after increase: {:?}", test_str);
     // build our application with a single route
     let server_address = std::env::var("SERVER_ADDR").unwrap_or("localhost:3333".to_owned());
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file");
