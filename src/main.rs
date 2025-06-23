@@ -12,12 +12,15 @@ use serde_json::json;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use sqlx::{
+    PgPool,
     Pool, 
     MySql, 
     Error, 
     MySqlPool,
     };
 use sqlx::mysql::MySqlPoolOptions;
+use sqlx::postgres::PgPoolOptions;
+
 
 #[tokio::main]
 async fn main() {
@@ -27,7 +30,7 @@ async fn main() {
     let server_address = std::env::var("SERVER_ADDR").unwrap_or("localhost:3333".to_owned());
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file");
 
-    let db_pool = MySqlPoolOptions::new()
+    let db_pool = PgPoolOptions::new()
     .max_connections(64)
     .acquire_timeout(Duration::from_secs(5))
     .connect(&database_url)
@@ -148,7 +151,7 @@ async fn second_route() -> &'static str {
 #[derive(Serialize)]
 struct TaskRow {
   task_id: i32,
-  name: String,
+  name: Option<String>,
   priority: Option<i32>,
 }
 
@@ -169,7 +172,7 @@ struct UpdateTaskReq {
   priority: Option<i32>,
 }
 
-async fn get_tasks(State(db_pool):State<MySqlPool>)
+async fn get_tasks(State(db_pool):State<PgPool>)
 ->Result<(StatusCode,String),(StatusCode,String)>
 {
     let rows = sqlx::query_as!(TaskRow,"SELECT * FROM axumtest1.tasks ORDER BY task_id")
@@ -188,7 +191,7 @@ async fn get_tasks(State(db_pool):State<MySqlPool>)
 }
 
 async fn update_task(
-  State(db_pool): State<MySqlPool>,
+  State(db_pool): State<PgPool>,
   Path(task_id): Path<i32>,
   Json(task): Json<UpdateTaskReq>,
 ) -> Result<(StatusCode, String), (StatusCode, String)> {
