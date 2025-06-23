@@ -18,8 +18,13 @@ use sqlx::{
     MySqlPool,
     };
 use sqlx::postgres::PgPoolOptions;
+use axum::response::{Response};
+
+
+
 pub mod dbmodel;
 use crate::dbmodel::devices::TestStr;
+
 
 
 #[tokio::main]
@@ -61,6 +66,7 @@ async fn main() {
         .route("/extractorTest1", get(ext_test1))
         .route("/extractorTest2", post(ext_test2))
         .route("/test_handler", post(test_handler))        
+        .route("/full_output_control", get(full_output_control))
         .with_state(db_pool);
     // Run the app with hyper, listening on the specified address
     axum::serve(listener, app)
@@ -68,6 +74,16 @@ async fn main() {
     .expect("Failed to start server");
 
 }
+
+//async fn full_output_control()->(StatusCode, HeaderMap,String) {
+async fn full_output_control()->Response<String> {
+    let response = Response::builder()
+    .status(StatusCode::OK)
+    .header("Content-Type", "application/json")
+    .body(json!({"success": true, "message": "Full output control successful"}).to_string());
+    response.unwrap()
+}
+
 
 enum TestCommands{
     None,
@@ -236,6 +252,5 @@ async fn update_task(
 
   Ok((StatusCode::OK, json!({"success":true}).to_string()))
 }
-
 
 
