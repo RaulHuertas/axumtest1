@@ -18,15 +18,17 @@ use sqlx::{
     MySqlPool,
     };
 use sqlx::postgres::PgPoolOptions;
-use axum::response::{Response};
-
+use axum::response::{Response, IntoResponse};
+use axum::body::Body;
 
 
 pub mod dbmodel;
 use crate::dbmodel::devices::TestStr;
 
-
-
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt; // for write_all()
+use tokio::io::AsyncReadExt; // for write_all()
+use axum::http::header;
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().expect("Unable to access .env file");
@@ -76,12 +78,43 @@ async fn main() {
 }
 
 //async fn full_output_control()->(StatusCode, HeaderMap,String) {
-async fn full_output_control()->Response<String> {
-    let response = Response::builder()
-    .status(StatusCode::OK)
-    .header("Content-Type", "application/json")
-    .body(json!({"success": true, "message": "Full output control successful"}).to_string());
-    response.unwrap()
+async fn full_output_control()-> (StatusCode,HeaderMap, Body) {
+
+    let mut testImage = File::open("evaUnit1.jpg")
+        .await
+        .expect("Failed to open test image");
+
+
+    let mut image_data = Vec::new();
+    if testImage.read_to_end(&mut image_data).await.is_err() {
+        eprintln!("Failed to read image data from evaUnit1.jpg");
+        return (StatusCode::INTERNAL_SERVER_ERROR, HeaderMap::new(), Body::from("Failed to read image"));
+        //return Response::builder()
+        //    .status(StatusCode::INTERNAL_SERVER_ERROR)
+        //    .body("Failed to read image".to_string().into_bytes())
+        //    .unwrap();
+    }
+    
+    let body = Body::from(image_data);
+
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::CONTENT_TYPE,
+        "text/plain; charset=utf-8".parse().unwrap(),
+    );
+    headers.insert(
+        header::CONTENT_DISPOSITION,
+        "attachment; filename=\"download_file.txt\"".parse().unwrap(),
+    );
+
+    (StatusCode::OK,headers, body)
+
+    //let response = Response::builder()
+    //.status(StatusCode::OK)
+    //.header("Content-Type", "image/jpg")
+    ////.body(json!({"success": true, "message": "Full output control successful"}).to_string());
+    //.body(body);
+    //response.unwrap()
 }
 
 
