@@ -14,18 +14,23 @@ use tokio::net::TcpListener;
 use sqlx::{
     PgPool,
     Pool, 
-    MySql, 
     Error, 
     MySqlPool,
     };
-use sqlx::mysql::MySqlPoolOptions;
 use sqlx::postgres::PgPoolOptions;
+pub mod dbmodel;
+use crate::dbmodel::devices::TestStr;
 
 
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().expect("Unable to access .env file");
 
+    let mut test_str = TestStr {
+        name: Some("Test".to_string()),
+        priority: Some(1),
+    };
+    println!("test_str: {:?}", test_str);
     // build our application with a single route
     let server_address = std::env::var("SERVER_ADDR").unwrap_or("localhost:3333".to_owned());
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env file");
