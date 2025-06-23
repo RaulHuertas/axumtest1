@@ -79,14 +79,15 @@ async fn main() {
 
 //async fn full_output_control()->(StatusCode, HeaderMap,String) {
 async fn full_output_control()-> (StatusCode,HeaderMap, Body) {
+    let file_name= "kommSusserTod.jpg";
 
-    let mut testImage = File::open("evaUnit1.jpg")
+    let mut test_image = File::open(file_name)
         .await
         .expect("Failed to open test image");
 
 
     let mut image_data = Vec::new();
-    if testImage.read_to_end(&mut image_data).await.is_err() {
+    if test_image.read_to_end(&mut image_data).await.is_err() {
         eprintln!("Failed to read image data from evaUnit1.jpg");
         return (StatusCode::INTERNAL_SERVER_ERROR, HeaderMap::new(), Body::from("Failed to read image"));
         //return Response::builder()
@@ -104,7 +105,7 @@ async fn full_output_control()-> (StatusCode,HeaderMap, Body) {
     );
     headers.insert(
         header::CONTENT_DISPOSITION,
-        "attachment; filename=\"download_file.txt\"".parse().unwrap(),
+        format!("attachment; filename=\"{}\"",file_name).parse().unwrap(),
     );
 
     (StatusCode::OK,headers, body)
