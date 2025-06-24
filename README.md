@@ -16,7 +16,7 @@ DATABASE_URL="mysql://debian-sys-maint:Ah0b2t4KYWqInMoo@localhost:3306/axumtest1
 - For postgres(including schema):
 
 
-DATABASE_URL="postgresql://postgres:rhuertas@localhost:5432/postgres?options=--search_path%3Daxumtest1"
+DATABASE_URL="postgresql://postgres:username@localhost:5432/password?options=--search_path%3Daxumtest1"
 
 
 
