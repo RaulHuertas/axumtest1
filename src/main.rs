@@ -30,6 +30,7 @@ use tokio::io::AsyncWriteExt; // for write_all()
 use tokio::io::AsyncReadExt; // for write_all()
 use axum::http::header;
 #[tokio::main]
+
 async fn main() {
     dotenvy::dotenv().expect("Unable to access .env file");
 
@@ -50,6 +51,15 @@ async fn main() {
     .connect(&database_url)
     .await
     .expect("can't connect to database");
+
+    //execute migrations
+    println!("Running migrations...");
+    sqlx::migrate!("./db/migrations")
+        .run(&db_pool)
+        .await
+        .expect("Failed to run migrations");
+    println!("Migrations completed successfully");
+
 
 
     // Create a socket address (IPv6 binding)
