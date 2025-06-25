@@ -32,6 +32,10 @@ use axum::http::header;
 #[tokio::main]
 
 async fn main() {
+
+    
+    println!("cargo:rerun-if-changed=migrations");    
+
     dotenvy::dotenv().expect("Unable to access .env file");
 
     let mut test_str = TestStr {
