@@ -2,7 +2,13 @@
 use axum::body::Body;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use sqlx::types::chrono::{DateTime,NaiveDateTime};
+use chrono::{DateTime,NaiveDateTime};
+
+use axum::{
+    extract::{Path,State}, http::{HeaderMap, Method, StatusCode}, 
+    routing::{get,patch,post,put,options}, 
+    Json, Router
+};
 
 #[derive(Deserialize,Debug,Serialize)]
 pub struct TestStr {
@@ -85,26 +91,30 @@ struct UpdateCheckMessage {
 }
 
 
-
 async fn device_check_updates(
     Json(payload):Json<UpdateCheckMessage>,
-) -> (StatusCode,HeaderMap,String){
+    app_state: State<AppState>
+) -> Result<(StatusCode,HeaderMap,String),(StatusCode,HeaderMap,String)>{
 
-    let mut responseHeaders = HeaderMap::new();
-    let deviceRow = sqlx::query_as!(
+    let mut response_headers = HeaderMap::new();
+    let device_row_result = sqlx::query_as!(
         Device,
         "select * from devices where phy_id = $1 and role = $2",
-        payload.phy_id, payload.role)
-        .fetch_one(&db_pool).await.map_err(|e| {
-            (StatusCode::INTERNAL_SERVER_ERROR, HeaderMap::new(), 
-             json!({"success": false, "message": e.to_string()}).to_string())
-        })?;
-
-
-    (       
-        StatusCode::OK,
-        responseHeaders,
-        json!({"success": true, "data": deviceRow}).to_string()
+        payload.phy_id, payload.role
     )
+    .fetch_one(&mut app_state.db_pool).
+    await;
+
+    if device_row_result.isErr() {
+       //Create a new device entry
+
+    }
+
+    Ok((       
+        StatusCode::OK,
+        response_headers,
+        json!({"success": true, "data": device_row_result}).to_string()
+    ))
 }
+
 

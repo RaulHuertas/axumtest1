@@ -63,17 +63,10 @@ async fn main() {
         .await
         .expect("Failed to run migrations");
     println!("Migrations completed successfully");
-
-
-
     // Create a socket address (IPv6 binding)
     let listener = TcpListener::bind(server_address)
     .await
     .expect("Could not create tcp listener");
-    
-   
-
-
 
     let app = Router::new()
         .route("/", get(root))
