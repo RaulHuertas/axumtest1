@@ -1,4 +1,5 @@
 
+use axum::body::Body;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::types::chrono::{DateTime,NaiveDateTime};
@@ -17,6 +18,7 @@ impl TestStr {
     }
 }
 
+#[derive(Deserialize,Debug,Serialize)]
 pub struct Version{
     pub mayor: i32,
     pub medium: i32,
@@ -44,6 +46,7 @@ impl Version {
 }
 
 
+#[derive(Deserialize,Debug,Serialize)]
 pub struct Device {
     pub id: String,
     pub registration_date:Option<NaiveDateTime>,
@@ -57,6 +60,7 @@ pub struct Device {
 }
 
 
+#[derive(Deserialize,Debug,Serialize)]
 pub struct Updates{
     pub id: String,
     pub registration_date:Option<NaiveDateTime>,
@@ -72,5 +76,35 @@ pub struct AppState{
 
 
 
+//check device update status
+#[derive(Deserialize,Debug,Serialize)]
+struct UpdateCheckMessage {
+    pub phy_id: String,
+    pub role: String,
+    pub role_currentd_vesion: i32,
+}
 
+
+
+async fn device_check_updates(
+    Json(payload):Json<UpdateCheckMessage>,
+) -> (StatusCode,HeaderMap,String){
+
+    let mut responseHeaders = HeaderMap::new();
+    let deviceRow = sqlx::query_as!(
+        Device,
+        "select * from devices where phy_id = $1 and role = $2",
+        payload.phy_id, payload.role)
+        .fetch_one(&db_pool).await.map_err(|e| {
+            (StatusCode::INTERNAL_SERVER_ERROR, HeaderMap::new(), 
+             json!({"success": false, "message": e.to_string()}).to_string())
+        })?;
+
+
+    (       
+        StatusCode::OK,
+        responseHeaders,
+        json!({"success": true, "data": deviceRow}).to_string()
+    )
+}
 
