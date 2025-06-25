@@ -11,3 +11,6 @@ create table devices (
     latest_updated_timestamp timestamp with time zone not null,
 
 );
+
+
+

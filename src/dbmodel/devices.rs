@@ -57,13 +57,20 @@ pub struct Device {
 }
 
 
-pub struct updateBundle{
+pub struct Updates{
     pub id: String,
+    pub registration_date:Option<NaiveDateTime>,
+
     pub version : i32,
     pub description: Option<String>,
+    pub destination_role: String,
 }
 
 pub struct AppState{
     pub db_pool: sqlx::Pool<sqlx::Postgres>,
 }
+
+
+
+
 
