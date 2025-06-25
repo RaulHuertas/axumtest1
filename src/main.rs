@@ -54,7 +54,7 @@ async fn main() {
 
     //execute migrations
     println!("Running migrations...");
-    sqlx::migrate!("./db/migrations")
+    sqlx::migrate!("./migrations")
         .run(&db_pool)
         .await
         .expect("Failed to run migrations");

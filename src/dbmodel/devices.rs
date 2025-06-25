@@ -63,7 +63,7 @@ pub struct Updates{
 
     pub version : i32,
     pub description: Option<String>,
-    pub destination_role: String,
+    pub role: String,
 }
 
 pub struct AppState{
