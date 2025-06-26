@@ -10,6 +10,13 @@ use axum::{
     Json, Router
 };
 
+use sqlx::{
+    PgPool,
+    Pool, 
+    Error, 
+    Postgres,
+};
+
 #[derive(Deserialize,Debug,Serialize)]
 pub struct TestStr {
   pub name: Option<String>,
@@ -54,28 +61,29 @@ impl Version {
 
 #[derive(Deserialize,Debug,Serialize)]
 pub struct Device {
-    pub id: String,
-    pub registration_date:Option<NaiveDateTime>,
+    pub id: i32,
+    pub registration_date:chrono::DateTime<chrono::Utc>,
 
     pub role: String,
     pub phy_id: String,
     pub description: Option<String>,
     pub latest_version: i32,
-    pub last_updated_timestamp: Option<NaiveDateTime>,
+    pub last_updated_timestamp: chrono::DateTime<chrono::Utc>,
 
 }
 
 
 #[derive(Deserialize,Debug,Serialize)]
 pub struct Updates{
-    pub id: String,
-    pub registration_date:Option<NaiveDateTime>,
+    pub id: i32,
+    pub registration_date:chrono::DateTime<chrono::Utc>,
 
     pub version : i32,
     pub description: Option<String>,
     pub role: String,
 }
 
+#[derive(Debug)]
 pub struct AppState{
     pub db_pool: sqlx::Pool<sqlx::Postgres>,
 }
@@ -93,7 +101,7 @@ struct UpdateCheckMessage {
 
 async fn device_check_updates(
     Json(payload):Json<UpdateCheckMessage>,
-    app_state: State<AppState>
+    State(db_pool): State<PgPool>,
 ) -> Result<(StatusCode,HeaderMap,String),(StatusCode,HeaderMap,String)>{
 
     let mut response_headers = HeaderMap::new();
@@ -102,10 +110,10 @@ async fn device_check_updates(
         "select * from devices where phy_id = $1 and role = $2",
         payload.phy_id, payload.role
     )
-    .fetch_one(&mut app_state.db_pool).
+    .fetch_one(&db_pool).
     await;
 
-    if device_row_result.isErr() {
+    if device_row_result.is_err() {
        //Create a new device entry
 
     }
@@ -113,7 +121,7 @@ async fn device_check_updates(
     Ok((       
         StatusCode::OK,
         response_headers,
-        json!({"success": true, "data": device_row_result}).to_string()
+        json!({"success": true, "data": device_row_result.unwrap()}).to_string()
     ))
 }
 
