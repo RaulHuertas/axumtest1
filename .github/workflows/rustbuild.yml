@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install ssl
-      run: apt install libssl-dev
+      run: sudo apt install -y libssl-dev
     - name: Build
       run: cargo build --verbose
     #- name: Run tests
